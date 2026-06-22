@@ -20,7 +20,8 @@ pub extern "C" fn Java_com_godico_devhub_MainActivity_startIpcServer(env: JNIEnv
     std::thread::spawn(move || {
         let (thread_jvm, thread_jclass) = (jvm_raw as JavaVMPtr, jclass_raw as JobjectPtr);
         loop {
-            if let Ok(stream) = TcpStream::connect_timeout(&"127.0.0.1:8080".parse().unwrap(), Duration::from_secs(3)) {
+            // PORT DIGANTI KE 9999
+            if let Ok(stream) = TcpStream::connect_timeout(&"127.0.0.1:9999".parse().unwrap(), Duration::from_secs(3)) {
                 let mut reader = BufReader::new(stream);
                 let mut line = String::new();
                 while let Ok(bytes) = reader.read_line(&mut line) {
