@@ -1,8 +1,10 @@
 name: GODICO Automated Android Build Engine
 
+# KITA PAKSA AKTIFKAN BERBAGAI MACAM PEMICU MASUK
 on:
   push:
     branches: [ main ]
+  workflow_dispatch: # <-- INI SAKTI: Memungkinkan kita trigger manual pake API/Tombol
 
 jobs:
   compile-and-assemble:
@@ -33,15 +35,11 @@ jobs:
     - name: 5. Eksekusi Kompilasi Silang Rust (Melahirkan .so)
       run: |
         cd rust_core
-        # Arahkan linker secara absolut ke folder toolchain LLVM NDK resmi di cloud
         export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="${ANDROID_NDK_LATEST_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android23-clang"
         cargo build --target aarch64-linux-android --release
-        
-        # Pindahkan biner .so otomatis
         mkdir -p ../app/src/main/jniLibs/arm64-v8a/
         cp target/aarch64-linux-android/release/librust_core.so ../app/src/main/jniLibs/arm64-v8a/
 
-    # KITA NYALAKAN JALUR PERAKITAN GRADLE SEKARANG BIAR APK NYA LANGSUNG LAHIR!
     - name: 6. Rakit APK Final via Gradle
       run: |
         chmod +x gradlew
