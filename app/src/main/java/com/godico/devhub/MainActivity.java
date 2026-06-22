@@ -1,10 +1,11 @@
 package com.godico.devhub;
 
+// Menggunakan Activity murni bawaan Android SDK (Anti-AndroidX)
+import android.app.Activity;
 import android.os.Bundle;
 import android.widget.TextView;
-import androidx.appcompat.app.AppCompatActivity;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends Activity {
 
     private TextView logTextView;
 
@@ -20,10 +21,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle bundle) {
         super.onCreate(bundle);
         
-        // Membuat UI minimalis konsol hitam-hijau hacker secara dinamis
+        // Membuat UI konsol hitam-hijau hacker secara dinamis
         logTextView = new TextView(this);
         logTextView.setTextSize(16);
-        logTextView.setBackgroundColor(0xFF000000); // Hitam
+        logTextView.setBackgroundColor(0xFF000000); // Hitam Pekat
         logTextView.setTextColor(0xFF00FF00);       // Hijau Matriks
         logTextView.setPadding(30, 30, 30, 30);
         logTextView.setText("=== GODICO DEVHUB LOG MONITOR ===\n[SYSTEM]: Menginisialisasi Pipa Rust...\n");
@@ -34,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
         startIpcServer();
     }
 
-    // Fungsi pembaruan teks yang WAJIB dipaksa berjalan di UI Thread Utama Android
+    // Fungsi pembaruan teks yang dipaksa berjalan di UI Thread Utama Android murni
     public void updateLogText(final String teks) {
         runOnUiThread(new Runnable() {
             @Override
