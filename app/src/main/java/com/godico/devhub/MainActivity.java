@@ -1,50 +1,45 @@
 package com.godico.devhub;
 
-// Menggunakan Activity murni bawaan Android SDK (Anti-AndroidX)
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.widget.TextView;
+import android.util.Log;
 
 public class MainActivity extends Activity {
-
     private TextView logTextView;
+    private Handler handler = new Handler(Looper.getMainLooper());
+    private String latestData = "[STATUS]: Menunggu data dari Termux...";
 
-    static {
-        // Memuat biner Rust_Core hasil bakaran lokal
-        System.loadLibrary("rust_core");
-    }
-
-    // Deklarasi fungsi asli JNI Rust
+    static { System.loadLibrary("rust_core"); }
     public native void startIpcServer();
 
     @Override
     protected void onCreate(Bundle bundle) {
         super.onCreate(bundle);
-        
-        // Membuat UI konsol hitam-hijau hacker secara dinamis
         logTextView = new TextView(this);
-        logTextView.setTextSize(16);
-        logTextView.setBackgroundColor(0xFF000000); // Hitam Pekat
-        logTextView.setTextColor(0xFF00FF00);       // Hijau Matriks
+        logTextView.setBackgroundColor(0xFF000000);
+        logTextView.setTextColor(0xFF00FF00);
         logTextView.setPadding(30, 30, 30, 30);
-        logTextView.setText("=== GODICO DEVHUB LOG MONITOR ===\n[SYSTEM]: Menginisialisasi Pipa Rust...\n");
-        
         setContentView(logTextView);
 
-        // Jalankan server monitor aktif Rust di latar belakang
-        startIpcServer();
+        new Thread(this::startIpcServer).start();
+        startHeartbeat();
     }
 
-    // Fungsi pembaruan teks yang dipaksa berjalan di UI Thread Utama Android murni
-    public void updateLogText(final String teks) {
-        runOnUiThread(new Runnable() {
+    private void startHeartbeat() {
+        handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                if (logTextView != null) {
-                    // Tambahkan teks baru di bawah baris sebelumnya (Append)
-                    logTextView.append("\n" + teks);
-                }
+                logTextView.setText("=== GODICO MONITOR ===\n" + latestData + "\n\n[HEARTBEAT]: " + System.currentTimeMillis() % 10000);
+                handler.postDelayed(this, 2000);
             }
-        });
+        }, 2000);
+    }
+
+    public void updateLogText(final String teks) {
+        latestData = "[DATA]: " + teks;
+        Log.d("GODICO_DATA", "Data diterima: " + teks);
     }
 }

@@ -3,7 +3,7 @@ use std::io::{BufReader, BufRead};
 use std::ffi::CString;
 use std::time::Duration;
 use android_logger::Config;
-use log::{info, error, LevelFilter};
+use log::{info, LevelFilter};
 
 type JNIEnvPtr = *mut jni_sys::JNIEnv;
 type JobjectPtr = jni_sys::jobject;
@@ -12,32 +12,24 @@ type JavaVMPtr = *mut jni_sys::JavaVM;
 #[no_mangle]
 #[allow(non_snake_case)]
 pub extern "C" fn Java_com_godico_devhub_MainActivity_startIpcServer(env: JNIEnvPtr, jclass: JobjectPtr) {
-    let _ = android_logger::init_once(Config::default().with_max_level(LevelFilter::Debug).with_tag("GODICO_RUST"));
-
+    let _ = android_logger::init_once(Config::default().with_max_level(LevelFilter::Info).with_tag("GODICO_RUST"));
     let mut jvm: JavaVMPtr = std::ptr::null_mut();
     unsafe { if let Some(f) = (*(*env)).GetJavaVM { f(env, &mut jvm); } }
-
-    let jvm_raw = jvm as usize;
-    let jclass_raw = jclass as usize;
+    let (jvm_raw, jclass_raw) = (jvm as usize, jclass as usize);
 
     std::thread::spawn(move || {
-        let thread_jvm = jvm_raw as JavaVMPtr;
-        let thread_jclass = jclass_raw as JobjectPtr;
-
+        let (thread_jvm, thread_jclass) = (jvm_raw as JavaVMPtr, jclass_raw as JobjectPtr);
         loop {
-            match TcpStream::connect("127.0.0.1:8080") {
-                Ok(stream) => {
-                    let mut reader = BufReader::new(stream);
-                    let mut baris = String::new();
-                    while let Ok(bytes) = reader.read_line(&mut baris) {
-                        if bytes == 0 { break; }
-                        let pesan = baris.trim().to_string();
-                        baris.clear();
-                        if !pesan.is_empty() { oper_ke_java(thread_jvm, thread_jclass, &pesan); }
-                    }
+            if let Ok(stream) = TcpStream::connect_timeout(&"127.0.0.1:8080".parse().unwrap(), Duration::from_secs(3)) {
+                let mut reader = BufReader::new(stream);
+                let mut line = String::new();
+                while let Ok(bytes) = reader.read_line(&mut line) {
+                    if bytes == 0 { break; }
+                    oper_ke_java(thread_jvm, thread_jclass, line.trim());
+                    line.clear();
                 }
-                Err(_) => { std::thread::sleep(Duration::from_secs(3)); }
             }
+            std::thread::sleep(Duration::from_secs(2));
         }
     });
 }
@@ -59,10 +51,7 @@ fn oper_ke_java(thread_jvm: JavaVMPtr, thread_jclass: JobjectPtr, teks: &str) {
                     }
                 }
             }
-        }
-        // Panggilan Detach yang "disederhanakan" untuk menghindari protes compiler
-        if let Some(detach_fn) = (*(*thread_jvm)).DetachCurrentThread {
-            let detach_ptr: extern "C" fn(JavaVMPtr) -> i32 = std::mem::transmute(detach_fn);
+            let detach_ptr: extern "C" fn(JavaVMPtr) -> i32 = std::mem::transmute((*(*thread_jvm)).DetachCurrentThread);
             let _ = detach_ptr(thread_jvm);
         }
     }
