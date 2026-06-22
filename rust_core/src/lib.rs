@@ -3,6 +3,10 @@ use std::io::{BufReader, BufRead};
 use std::ffi::CString;
 use std::time::Duration;
 
+// Menyisipkan fungsi logging bawaan sistem operasi Android
+use android_logger::Config;
+use log::{info, error, LevelFilter};
+
 type JNIEnvPtr = *mut jni_sys::JNIEnv;
 type JobjectPtr = jni_sys::jobject;
 type JavaVMPtr = *mut jni_sys::JavaVM;
@@ -13,6 +17,15 @@ pub extern "C" fn Java_com_godico_devhub_MainActivity_startIpcServer(
     env: JNIEnvPtr,
     jclass: JobjectPtr,
 ) {
+    // Inisialisasi sistem penyadapan log Android (Hanya sekali seumur hidup aplikasi)
+    let _ = android_logger::init_once(
+        Config::default()
+            .with_max_level(LevelFilter::Debug)
+            .with_tag("GODICO_RUST")
+    );
+
+    info!("Sistem Pengintai Rust AKTIF! Memulai thread IPC...");
+
     let mut jvm: JavaVMPtr = std::ptr::null_mut();
     unsafe {
         if let Some(f) = (*(*env)).GetJavaVM {
@@ -28,34 +41,43 @@ pub extern "C" fn Java_com_godico_devhub_MainActivity_startIpcServer(
         let thread_jclass = jclass_raw as JobjectPtr;
 
         loop {
-            // Kita coba hubungkan ke semua jalur potensial (Localhost Android Bridge)
-            if let Ok(stream) = TcpStream::connect("127.0.0.1:8080") {
-                let mut reader = BufReader::new(stream);
-                let mut baris_teks = String::new();
-                
-                // Kirim sinyal pertama ke Java bahwa koneksi ke Termux BERHASIL dibangun!
-                oper_ke_java(thread_jvm, thread_jclass, "🟢 [SYSTEM]: Terhubung ke Termux Server!");
+            info!("Mencoba menusuk gerbang Termux di 127.0.0.1:8080...");
+            
+            // Kita kembalikan ke localhost karena kita akan sadap eror aslinya
+            match TcpStream::connect("127.0.0.1:8080") {
+                Ok(stream) => {
+                    info!("🔥 BERHASIL HANDSHAKE! Pipa TCP Terkunci dengan Termux!");
+                    oper_ke_java(thread_jvm, thread_jclass, "🟢 [CONNECTED]: Jalur Terkunci!");
 
-                while let Ok(bytes) = reader.read_line(&mut baris_teks) {
-                    if bytes == 0 { break; } 
+                    let mut reader = BufReader::new(stream);
+                    let mut baris_teks = String::new();
                     
-                    let pesan = baris_teks.trim().to_string();
-                    baris_teks.clear(); 
-                    
-                    if pesan.is_empty() { continue; }
+                    while let Ok(bytes) = reader.read_line(&mut baris_teks) {
+                        if bytes == 0 { 
+                            info!("Koneksi diputus oleh Server Termux.");
+                            break; 
+                        } 
+                        
+                        let pesan = baris_teks.trim().to_string();
+                        baris_teks.clear(); 
+                        
+                        if pesan.is_empty() { continue; }
 
-                    // Kirim hasil ketikan realtime ke Java
-                    oper_ke_java(thread_jvm, thread_jclass, &pesan);
+                        info!("Menangkap data dari Termux: {}", pesan);
+                        oper_ke_java(thread_jvm, thread_jclass, &pesan);
+                    }
+                }
+                Err(e) => {
+                    // DI SINI KITA AKAN TAHU ALASAN UTAMA MENGAPA PIPANYA MAMPET!
+                    error!("❌ GAGAL KONEKSI! Alasan Sistem: {:?}", e);
+                    oper_ke_java(thread_jvm, thread_jclass, "🔴 [STUCK]: Mencari Frekuensi...");
                 }
             }
-            // Jika gagal terhubung, kirim status ke UI agar kita bisa memantau
-            oper_ke_java(thread_jvm, thread_jclass, "🔴 [SYSTEM]: Mencari koneksi Termux...");
-            std::thread::sleep(Duration::from_secs(2));
+            std::thread::sleep(Duration::from_secs(3));
         }
     });
 }
 
-// Fungsi bantu untuk membungkus pengiriman JNI secara steril
 fn oper_ke_java(thread_jvm: JavaVMPtr, thread_jclass: JobjectPtr, teks: &str) {
     unsafe {
         let mut local_env: JNIEnvPtr = std::ptr::null_mut();
@@ -90,7 +112,7 @@ fn oper_ke_java(thread_jvm: JavaVMPtr, thread_jclass: JobjectPtr, teks: &str) {
                 }
             }
         }
-        if let Some(detach_fn) = (*(*thread_jvm)).DetachCurrentThread {
+        if let Some(detach_fn) = (*(*thread_jvm)).AttachCurrentThread {
             let _ = detach_fn(thread_jvm);
         }
     }
