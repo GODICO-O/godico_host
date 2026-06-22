@@ -1,4 +1,20 @@
-// Top-level build file khusus mendaftarkan plugin secara tersentralisasi
-plugins {
-    id 'com.android.application' version '8.0.2' apply false
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.4.2'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
 }
