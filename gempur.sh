@@ -14,7 +14,7 @@ echo -e "${BIRU}====================================================${NORMAL}"
 # 1. OTOMATIS GAMPUR PUSH KE GITHUB
 echo -e "\n${KUNING}[1/5] Mengunci kode dan mengirim ke awan GitHub...${NORMAL}"
 git add .
-git commit -m "Auto-build: Perbaikan sistem dan penyelarasan biner"
+git commit -m "Auto-build: Sinkronisasi ikon baru dan optimalisasi skrip"
 git push origin main
 
 if [ $? -ne 0 ]; then
@@ -22,14 +22,16 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# JEDA 5 DETIK SESUAI INSTRUKSI STRATEGIS KOMANDAN
+echo -e "\n${KUNING}⏳ Memberikan jeda 5 detik agar server GitHub bangun...${NORMAL}"
+sleep 5
+
 # 2. OTOMATIS MEMANTAU BUILD (GH RUN WATCH)
 echo -e "\n${KUNING}[2/5] Menghubungi robot GitHub Actions. Memulai pengawasan...${NORMAL}"
-sleep 2
 gh run watch
 
 # 3. OTOMATIS DOWNLOAD ARTIFACT DARI RUN TERBARU
 echo -e "\n${KUNING}[3/5] Build Sukses! Mengunduh biner APK terbaru dari awan...${NORMAL}"
-# Bersihkan folder download lama jika ada
 rm -rf tmp_godico_apk
 mkdir -p tmp_godico_apk
 
@@ -48,12 +50,10 @@ echo -e "${HIJAU}✅ APK Berhasil diunduh dan diekstrak!${NORMAL}"
 # 5. MEMICU POP-UP INSTALASI DAN UNINSTALL DI ANDROID
 echo -e "\n${KUNING}[4/5] Mengirim instruksi eksekusi ke Android...${NORMAL}"
 
-# Salin APK ke penyimpanan internal telepon agar bisa dibaca oleh sistem installer Android
-termux-setup-storage
+# Salin APK langsung ke penyimpanan download (tanpa trigger setup storage lagi)
 cp tmp_godico_apk/app-debug.apk /sdcard/Download/godico-devhub.apk
 
 echo -e "${BIRU}ℹ️  Membuka halaman Uninstall Versi Lama (jika terpasang)...${NORMAL}"
-# Memicu pop-up pencopotan aplikasi secara resmi via intent Android
 am start -a android.intent.action.DELETE -d "package:com.godico.devhub" --user 0 > /dev/null 2>&1
 
 echo -e "${HIJAU}👉 Silakan klik 'OKE' jika muncul pop-up uninstall di layar HP lu.${NORMAL}"
@@ -61,7 +61,6 @@ echo -e "${KUNING}Menunggu 5 detik sebelum memunculkan pop-up instalasi baru...$
 sleep 5
 
 echo -e "\n${KUNING}[5/5] MEMUNCULKAN POP-UP INSTALASI APK BARU...${NORMAL}"
-# Memicu pop-up installer resmi Android untuk memasang APK yang baru kita download tadi
 am start -a android.intent.action.VIEW \
     -d "file:///sdcard/Download/godico-devhub.apk" \
     -t "application/vnd.android.package-archive" --user 0 > /dev/null 2>&1
