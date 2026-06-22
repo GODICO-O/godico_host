@@ -28,21 +28,19 @@ pub extern "C" fn Java_com_godico_devhub_MainActivity_startIpcServer(
         let thread_jclass = jclass_raw as JobjectPtr;
 
         loop {
-            // Coba terus terhubung ke server Ncat Termux
-            if let Ok(mut stream) = TcpStream::connect("127.0.0.1:8080") {
+            // SOLUSI MUTLAK: Tembak langsung ke IP WLAN lokal agar menembus sandbox Android!
+            // GANTI 192.168.0.110 di bawah ini dengan IP asli HP lu jika berbeda!
+            if let Ok(mut stream) = TcpStream::connect("192.168.0.110:8080") {
                 let mut buffer = [0; 1024];
                 
-                // Baca stream secara kontinu selama Ncat mengirim data
                 while let Ok(bytes_read) = stream.read(&mut buffer) {
                     if bytes_read == 0 { break; } 
                     
-                    // Bersihkan spasi atau newline (\n) bawaan ketikan terminal Ncat
                     let pesan_mentah = String::from_utf8_lossy(&buffer[..bytes_read]);
                     let pesan = pesan_mentah.trim().to_string();
                     
                     if pesan.is_empty() { continue; }
 
-                    // Oper data hasil pembersihan ke UI Java via JNI
                     unsafe {
                         let mut local_env: JNIEnvPtr = std::ptr::null_mut();
                         if let Some(attach_fn) = (*(*thread_jvm)).AttachCurrentThread {
@@ -83,7 +81,6 @@ pub extern "C" fn Java_com_godico_devhub_MainActivity_startIpcServer(
                     }
                 }
             }
-            // Jika koneksi putus atau Ncat belum nyala, tunggu 1 detik sebelum coba lagi
             std::thread::sleep(Duration::from_secs(1));
         }
     });
