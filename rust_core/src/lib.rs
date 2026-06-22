@@ -1,6 +1,7 @@
-use std::net::TcpListener;
-use std::io::{Read, Write};
+use std::net::TcpStream;
+use std::io::Read;
 use std::ffi::CString;
+use std::time::Duration;
 
 type JNIEnvPtr = *mut jni_sys::JNIEnv;
 type JobjectPtr = jni_sys::jobject;
@@ -26,70 +27,62 @@ pub extern "C" fn Java_com_godico_devhub_MainActivity_startIpcServer(
         let thread_jvm = jvm_raw as JavaVMPtr;
         let thread_jclass = jclass_raw as JobjectPtr;
 
-        // Buka gerbang pelabuhan port 8080
-        match TcpListener::bind("0.0.0.0:8080") {
-            Ok(listener) => {
-                for stream in listener.incoming() {
-                    match stream {
-                        Ok(mut s) => {
-                            // SOLUSI 1: Perbesar buffer menjadi 1024 bytes agar teks panjang tidak buntung
-                            let mut buffer = [0; 1024]; 
-                            if let Ok(bytes_read) = s.read(&mut buffer) {
-                                if bytes_read == 0 { continue; }
-                                
-                                let pesan = String::from_utf8_lossy(&buffer[..bytes_read]).to_string();
-                                
-                                // Kirim balasan aman ke Termux
-                                let respon = format!("STATUS:LOG_DISPLAYED | Konten: {}", pesan);
-                                let _ = s.write_all(respon.as_bytes());
+        // Loop abadi: Aplikasi akan terus mencoba terhubung dan membaca data dari Termux
+        loop {
+            // Hubungi localhost Termux (127.0.0.1) pada port 8080
+            if let Ok(mut stream) = TcpStream::connect("127.0.0.1:8080") {
+                // Set timeout baca agar tidak freeze jika Termux diam
+                let _ = stream.set_read_timeout(Some(Duration::from_millis(500)));
+                
+                let mut buffer = [0; 1024];
+                while let Ok(bytes_read) = stream.read(&mut buffer) {
+                    if bytes_read == 0 { break; } // Koneksi terputus
+                    
+                    let pesan = String::from_utf8_lossy(&buffer[..bytes_read]).to_string();
 
-                                // EKSEKUSI JNI DENGAN PENGAMAN MUTLAK
-                                unsafe {
-                                    let mut local_env: JNIEnvPtr = std::ptr::null_mut();
-                                    if let Some(attach_fn) = (*(*thread_jvm)).AttachCurrentThread {
-                                        let res = attach_fn(
-                                            thread_jvm, 
-                                            &mut local_env as *mut JNIEnvPtr as *mut *mut std::ffi::c_void, 
-                                            std::ptr::null_mut()
-                                        );
-                                        
-                                        if res == 0 && !local_env.is_null() {
-                                            if let Some(get_method_id) = (*(*local_env)).GetMethodID {
-                                                let class_target = if let Some(get_class) = (*(*local_env)).GetObjectClass {
-                                                    get_class(local_env, thread_jclass)
-                                                } else { std::ptr::null_mut() };
+                    // Lempar data secara aman ke UI Java
+                    unsafe {
+                        let mut local_env: JNIEnvPtr = std::ptr::null_mut();
+                        if let Some(attach_fn) = (*(*thread_jvm)).AttachCurrentThread {
+                            let res = attach_fn(
+                                thread_jvm, 
+                                &mut local_env as *mut JNIEnvPtr as *mut *mut std::ffi::c_void, 
+                                std::ptr::null_mut()
+                            );
+                            
+                            if res == 0 && !local_env.is_null() {
+                                if let Some(get_method_id) = (*(*local_env)).GetMethodID {
+                                    let class_target = if let Some(get_class) = (*(*local_env)).GetObjectClass {
+                                        get_class(local_env, thread_jclass)
+                                    } else { std::ptr::null_mut() };
 
-                                                let method_name = CString::new("updateLogText").unwrap();
-                                                let method_sig = CString::new("(Ljava/lang/String;)V").unwrap();
-                                                
-                                                let method_id = get_method_id(local_env, class_target, method_name.as_ptr(), method_sig.as_ptr());
-                                                
-                                                if !method_id.is_null() {
-                                                    if let Some(new_string) = (*(*local_env)).NewStringUTF {
-                                                        let c_pesan = CString::new(pesan).unwrap();
-                                                        let j_pesan = new_string(local_env, c_pesan.as_ptr());
-                                                        
-                                                        if let Some(call_method) = (*(*local_env)).CallVoidMethod {
-                                                            call_method(local_env, thread_jclass, method_id, j_pesan);
-                                                        }
-                                                    }
-                                                }
+                                    let method_name = CString::new("updateLogText").unwrap();
+                                    let method_sig = CString::new("(Ljava/lang/String;)V").unwrap();
+                                    
+                                    let method_id = get_method_id(local_env, class_target, method_name.as_ptr(), method_sig.as_ptr());
+                                    
+                                    if !method_id.is_null() {
+                                        if let Some(new_string) = (*(*local_env)).NewStringUTF {
+                                            let c_pesan = CString::new(pesan.clone()).unwrap();
+                                            let j_pesan = new_string(local_env, c_pesan.as_ptr());
+                                            
+                                            if let Some(call_method) = (*(*local_env)).CallVoidMethod {
+                                                call_method(local_env, thread_jclass, method_id, j_pesan);
                                             }
                                         }
-                                    }
-                                    
-                                    // SOLUSI 2: WAJIB DETACH THREAD AGAR ANDROID TIDAK LEAK / CRASH AUTO-REFRESH!
-                                    if let Some(detach_fn) = (*(*thread_jvm)).DetachCurrentThread {
-                                        detach_fn(thread_jvm);
                                     }
                                 }
                             }
                         }
-                        Err(_) => {}
+                        
+                        if let Some(detach_fn) = (*(*thread_jvm)).DetachCurrentThread {
+                            detach_fn(thread_jvm);
+                        }
                     }
                 }
             }
-            Err(_) => {}
+            // Jika Termux belum siap / putus koneksi, tunggu 1 detik lalu coba hubungkan kembali (Auto-Reconnect)
+            std::thread::sleep(Duration::from_secs(1));
         }
     });
 }
