@@ -8,10 +8,17 @@ android {
 
     defaultConfig {
         applicationId "com.godico.devhub"
-        minSdk 23
+        minSdk 26
         targetSdk 33
         versionCode 1
         versionName "1.0"
+    }
+
+    // MANDATORI MUTLAK: Beritahu Gradle untuk mengemas .so dari jniLibs
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['src/main/jniLibs']
+        }
     }
 
     buildTypes {
