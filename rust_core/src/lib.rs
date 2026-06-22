@@ -27,20 +27,22 @@ pub extern "C" fn Java_com_godico_devhub_MainActivity_startIpcServer(
         let thread_jvm = jvm_raw as JavaVMPtr;
         let thread_jclass = jclass_raw as JobjectPtr;
 
-        // Loop abadi: Aplikasi akan terus mencoba terhubung dan membaca data dari Termux
         loop {
-            // Hubungi localhost Termux (127.0.0.1) pada port 8080
+            // Coba terus terhubung ke server Ncat Termux
             if let Ok(mut stream) = TcpStream::connect("127.0.0.1:8080") {
-                // Set timeout baca agar tidak freeze jika Termux diam
-                let _ = stream.set_read_timeout(Some(Duration::from_millis(500)));
-                
                 let mut buffer = [0; 1024];
+                
+                // Baca stream secara kontinu selama Ncat mengirim data
                 while let Ok(bytes_read) = stream.read(&mut buffer) {
-                    if bytes_read == 0 { break; } // Koneksi terputus
+                    if bytes_read == 0 { break; } 
                     
-                    let pesan = String::from_utf8_lossy(&buffer[..bytes_read]).to_string();
+                    // Bersihkan spasi atau newline (\n) bawaan ketikan terminal Ncat
+                    let pesan_mentah = String::from_utf8_lossy(&buffer[..bytes_read]);
+                    let pesan = pesan_mentah.trim().to_string();
+                    
+                    if pesan.is_empty() { continue; }
 
-                    // Lempar data secara aman ke UI Java
+                    // Oper data hasil pembersihan ke UI Java via JNI
                     unsafe {
                         let mut local_env: JNIEnvPtr = std::ptr::null_mut();
                         if let Some(attach_fn) = (*(*thread_jvm)).AttachCurrentThread {
@@ -81,7 +83,7 @@ pub extern "C" fn Java_com_godico_devhub_MainActivity_startIpcServer(
                     }
                 }
             }
-            // Jika Termux belum siap / putus koneksi, tunggu 1 detik lalu coba hubungkan kembali (Auto-Reconnect)
+            // Jika koneksi putus atau Ncat belum nyala, tunggu 1 detik sebelum coba lagi
             std::thread::sleep(Duration::from_secs(1));
         }
     });
