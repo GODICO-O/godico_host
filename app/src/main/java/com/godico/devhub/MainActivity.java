@@ -2,23 +2,26 @@ package com.godico.devhub;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.view.Surface;
-import android.view.SurfaceHolder;
+import android.widget.TextView;
 import android.view.SurfaceView;
+import android.view.ViewGroup;
 
-public class MainActivity extends Activity implements SurfaceHolder.Callback {
+public class MainActivity extends Activity {
     static { System.loadLibrary("rust_core"); }
-    public native void initRenderer(Surface surface);
+    public native void startIpcServer();
 
     @Override
     protected void onCreate(Bundle bundle) {
         super.onCreate(bundle);
-        SurfaceView surfaceView = new SurfaceView(this);
-        surfaceView.getHolder().addCallback(this);
-        setContentView(surfaceView);
+        
+        // Buat container untuk teks dan kanvas
+        TextView tv = new TextView(this);
+        tv.setText("🗿 VOID-Display: ONLINE\nMenunggu Aliran Pixel...");
+        
+        SurfaceView surface = new SurfaceView(this);
+        surface.setLayoutParams(new ViewGroup.LayoutParams(500, 500));
+        
+        setContentView(tv);
+        startIpcServer();
     }
-
-    @Override public void surfaceCreated(SurfaceHolder holder) { initRenderer(holder.getSurface()); }
-    @Override public void surfaceChanged(SurfaceHolder h, int f, int w, int hgt) {}
-    @Override public void surfaceDestroyed(SurfaceHolder h) {}
 }
