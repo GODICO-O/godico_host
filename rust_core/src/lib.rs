@@ -1,5 +1,5 @@
 use std::net::TcpStream;
-use std::io::Read;
+use std::io::{BufReader, BufRead};
 use std::ffi::CString;
 use std::time::Duration;
 
@@ -28,19 +28,22 @@ pub extern "C" fn Java_com_godico_devhub_MainActivity_startIpcServer(
         let thread_jclass = jclass_raw as JobjectPtr;
 
         loop {
-            // SOLUSI MUTLAK: Tembak langsung ke IP WLAN lokal agar menembus sandbox Android!
-            // GANTI 192.168.0.110 di bawah ini dengan IP asli HP lu jika berbeda!
-            if let Ok(mut stream) = TcpStream::connect("192.168.0.110:8080") {
-                let mut buffer = [0; 1024];
+            // Gunakan IP WLAN HP Lu (Sesuaikan jika IP berubah!)
+            if let Ok(stream) = TcpStream::connect("192.168.0.110:8080") {
+                // Bungkus stream dengan BufReader agar bisa mendeteksi baris baru (\n) hasil ketikan ncat secara instan!
+                let mut reader = BufReader::new(stream);
+                let mut baris_teks = String::new();
                 
-                while let Ok(bytes_read) = stream.read(&mut buffer) {
-                    if bytes_read == 0 { break; } 
+                // Baca baris per baris secara real-time setiap tombol Enter ditekan di Termux
+                while let Ok(bytes) = reader.read_line(&mut baris_teks) {
+                    if bytes == 0 { break; } // Koneksi terputus
                     
-                    let pesan_mentah = String::from_utf8_lossy(&buffer[..bytes_read]);
-                    let pesan = pesan_mentah.trim().to_string();
+                    let pesan = baris_teks.trim().to_string();
+                    baris_teks.clear(); // Kosongkan penampung untuk ketikan berikutnya
                     
                     if pesan.is_empty() { continue; }
 
+                    // Eksekusi pelemparan data biner ke UI Java via JNI
                     unsafe {
                         let mut local_env: JNIEnvPtr = std::ptr::null_mut();
                         if let Some(attach_fn) = (*(*thread_jvm)).AttachCurrentThread {
@@ -81,6 +84,7 @@ pub extern "C" fn Java_com_godico_devhub_MainActivity_startIpcServer(
                     }
                 }
             }
+            // Auto-reconnect jika terputus
             std::thread::sleep(Duration::from_secs(1));
         }
     });
