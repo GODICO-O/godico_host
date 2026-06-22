@@ -1,51 +1,48 @@
 package com.godico.devhub;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.widget.TextView;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
+import androidx.appcompat.app.AppCompatActivity;
 
-public class MainActivity extends Activity {
+public class MainActivity extends AppCompatActivity {
 
-    private TextView tvLog;
+    private TextView logTextView;
 
     static {
+        // Memuat biner Rust_Core hasil bakaran lokal
         System.loadLibrary("rust_core");
     }
 
+    // Deklarasi fungsi asli JNI Rust
     public native void startIpcServer();
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    protected void onCreate(Bundle bundle) {
+        super.onCreate(bundle);
+        
+        // Membuat UI minimalis konsol hitam-hijau hacker secara dinamis
+        logTextView = new TextView(this);
+        logTextView.setTextSize(16);
+        logTextView.setBackgroundColor(0xFF000000); // Hitam
+        logTextView.setTextColor(0xFF00FF00);       // Hijau Matriks
+        logTextView.setPadding(30, 30, 30, 30);
+        logTextView.setText("=== GODICO DEVHUB LOG MONITOR ===\n[SYSTEM]: Menginisialisasi Pipa Rust...\n");
+        
+        setContentView(logTextView);
 
-        // Buat tampilan monitor log yang rapi dan futuristik
-        tvLog = new TextView(this);
-        tvLog.setText("🗿 GODICO LIVE LOG MONITOR 🗿\n\n[Sistem] Menunggu kiriman log dari Termux...\n-----------------------------------------");
-        tvLog.setTextSize(16);
-        tvLog.setPadding(50, 50, 50, 50);
-        tvLog.setBackgroundColor(0xFF1E1E1E); // Latar belakang hitam konsol
-        tvLog.setTextColor(0xFF00FF00);       // Teks warna hijau matriks
-        setContentView(tvLog);
-
-        // Jalankan server IPC Rust sambil mengoper instance objek saat ini
+        // Jalankan server monitor aktif Rust di latar belakang
         startIpcServer();
     }
 
-    // FUNGSI SAKTI: Akan dipanggil langsung oleh Rust di latar belakang
-    public void updateLogText(final String logBaru) {
-        // Wajib dilempar ke runOnUiThread agar sistem Android tidak crash saat memanipulasi teks
+    // Fungsi pembaruan teks yang WAJIB dipaksa berjalan di UI Thread Utama Android
+    public void updateLogText(final String teks) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                String timeStamp = new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date());
-                String teksLama = tvLog.getText().toString();
-                
-                // Tambahkan log baru di baris paling bawah
-                String teksBaru = teksLama + "\n[" + timeStamp + "] " + logBaru;
-                tvLog.setText(teksBaru);
+                if (logTextView != null) {
+                    // Tambahkan teks baru di bawah baris sebelumnya (Append)
+                    logTextView.append("\n" + teks);
+                }
             }
         });
     }

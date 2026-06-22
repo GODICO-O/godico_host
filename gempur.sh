@@ -23,8 +23,8 @@ if [ $? -ne 0 ]; then
 fi
 
 # JEDA 5 DETIK SESUAI INSTRUKSI STRATEGIS KOMANDAN
-echo -e "\n${KUNING}⏳ Memberikan jeda 5 detik agar server GitHub bangun...${NORMAL}"
-sleep 5
+echo -e "\n${KUNING}⏳ Memberikan jeda 3 detik agar server GitHub bangun...${NORMAL}"
+sleep 3
 
 # 2. OTOMATIS MEMANTAU BUILD (GH RUN WATCH)
 echo -e "\n${KUNING}[2/5] Menghubungi robot GitHub Actions. Memulai pengawasan...${NORMAL}"
@@ -53,12 +53,6 @@ echo -e "\n${KUNING}[4/5] Mengirim instruksi eksekusi ke Android...${NORMAL}"
 # Salin APK langsung ke penyimpanan download (tanpa trigger setup storage lagi)
 cp tmp_godico_apk/app-debug.apk /sdcard/Download/godico-devhub.apk
 
-echo -e "${BIRU}ℹ️  Membuka halaman Uninstall Versi Lama (jika terpasang)...${NORMAL}"
-am start -a android.intent.action.DELETE -d "package:com.godico.devhub" --user 0 > /dev/null 2>&1
-
-echo -e "${HIJAU}👉 Silakan klik 'OKE' jika muncul pop-up uninstall di layar HP lu.${NORMAL}"
-echo -e "${KUNING}Menunggu 5 detik sebelum memunculkan pop-up instalasi baru...${NORMAL}"
-sleep 5
 
 echo -e "\n${KUNING}[5/5] MEMUNCULKAN POP-UP INSTALASI APK BARU...${NORMAL}"
 am start -a android.intent.action.VIEW \
