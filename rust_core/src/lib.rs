@@ -8,12 +8,7 @@ pub extern "C" fn Java_com_godico_devhub_MainActivity_startIpcServer(
     env: *mut ndk_sys::JNIEnv,
     jclass: ndk_sys::jobject,
 ) {
-    // Karena env dan jclass akan dipakai di dalam thread terpisah, kita butuh arsitektur JavaVM.
-    // Namun untuk implementasi super stabil, ringan, dan anti-crash di Oppo, kita buat trik duplikasi Environment
-    // atau menggunakan pointer mentah yang dilempar secara aman ke global runtime jika diperlukan.
-    // Kali ini kita gunakan taktik mutlak: Simpan JavaVM secara global atau panggil balik langsung saat stream masuk!
-    
-    // Kita ambil pointer global JVM agar thread Rust bisa berinteraksi dengan UI Java kapan saja
+    // 1. Ambil pointer global JavaVM dari Environment saat ini
     let mut jvm: *mut ndk_sys::JavaVM = std::ptr::null_mut();
     unsafe {
         if let Some(f) = (*(*env)).GetJavaVM {
@@ -21,7 +16,15 @@ pub extern "C" fn Java_com_godico_devhub_MainActivity_startIpcServer(
         }
     }
 
+    // 2. TRIK GAIB: Ubah pointer mentah menjadi bilangan bulat (usize) agar lolos trait 'Send' di thread
+    let jvm_raw = jvm as usize;
+    let jclass_raw = jclass as usize;
+
     std::thread::spawn(move || {
+        // Kembalikan angka bilangan bulat tadi menjadi pointer mentah JNI di dalam thread baru
+        let thread_jvm = jvm_raw as *mut ndk_sys::JavaVM;
+        let thread_jclass = jclass_raw as ndk_sys::jobject;
+
         match TcpListener::bind("0.0.0.0:8080") {
             Ok(listener) => {
                 for stream in listener.incoming() {
@@ -38,14 +41,14 @@ pub extern "C" fn Java_com_godico_devhub_MainActivity_startIpcServer(
                                 // ATTACH THREAD RUST KE JAVA VM SEARA GAIB
                                 unsafe {
                                     let mut local_env: *mut ndk_sys::JNIEnv = std::ptr::null_mut();
-                                    if let Some(attach_fn) = (*(*jvm)).AttachCurrentThread {
-                                        let res = attach_fn(jvm, &mut local_env as *mut *mut ndk_sys::JNIEnv as *mut *mut std::ffi::c_void, std::ptr::null_mut());
+                                    if let Some(attach_fn) = (*(*thread_jvm)).AttachCurrentThread {
+                                        let res = attach_fn(thread_jvm, &mut local_env as *mut *mut ndk_sys::JNIEnv as *mut *mut std::ffi::c_void, std::ptr::null_mut());
+                                        
                                         if res == 0 && !local_env.is_null() {
-                                            
                                             // Cari fungsi "updateLogText" di dalam MainActivity.java
                                             if let Some(get_method_id) = (*(*local_env)).GetMethodID {
                                                 let class_target = if let Some(get_class) = (*(*local_env)).GetObjectClass {
-                                                    get_class(local_env, jclass)
+                                                    get_class(local_env, thread_jclass)
                                                 } else { std::ptr::null_mut() };
 
                                                 let method_name = CString::new("updateLogText").unwrap();
@@ -61,7 +64,7 @@ pub extern "C" fn Java_com_godico_devhub_MainActivity_startIpcServer(
                                                         
                                                         // PANGGIL BALIK JAVA SEKARANG!
                                                         if let Some(call_method) = (*(*local_env)).CallVoidMethod {
-                                                            call_method(local_env, jclass, method_id, j_pesan);
+                                                            call_method(local_env, thread_jclass, method_id, j_pesan);
                                                         }
                                                     }
                                                 }
