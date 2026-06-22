@@ -25,6 +25,7 @@ jobs:
 
     - name: 4. Konfigurasi Android NDK Environment
       uses: nttld/setup-ndk@v1
+      id: setup-ndk
       with:
         ndk-version: r25c
         add-to-path: true
@@ -32,12 +33,22 @@ jobs:
     - name: 5. Eksekusi Kompilasi Silang Rust (Melahirkan .so)
       run: |
         cd rust_core
-        export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER=aarch64-linux-android23-clang
+        # Arahkan linker secara absolut ke folder toolchain LLVM NDK resmi di cloud
+        export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="${ANDROID_NDK_LATEST_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android23-clang"
         cargo build --target aarch64-linux-android --release
         
-        # Jembatan pemindahan biner otomatis di dalam server cloud
+        # Pindahkan biner .so otomatis
         mkdir -p ../app/src/main/jniLibs/arm64-v8a/
         cp target/aarch64-linux-android/release/librust_core.so ../app/src/main/jniLibs/arm64-v8a/
 
-    # Catatan: Langkah pembungkusan Gradle APK akan otomatis aktif begitu 
-    # file build.gradle utama dan source code Java lu gabungkan nanti!
+    # KITA NYALAKAN JALUR PERAKITAN GRADLE SEKARANG BIAR APK NYA LANGSUNG LAHIR!
+    - name: 6. Rakit APK Final via Gradle
+      run: |
+        chmod +x gradlew
+        ./gradlew assembleDebug --rerun-tasks
+
+    - name: 7. Amankan File APK ke GitHub Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: GODICO-DevHub-APK
+        path: app/build/outputs/apk/debug/app-debug.apk
