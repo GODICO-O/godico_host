@@ -1,10 +1,9 @@
 name: GODICO Automated Android Build Engine
 
-# KITA PAKSA AKTIFKAN BERBAGAI MACAM PEMICU MASUK
 on:
   push:
     branches: [ main ]
-  workflow_dispatch: # <-- INI SAKTI: Memungkinkan kita trigger manual pake API/Tombol
+  workflow_dispatch:
 
 jobs:
   compile-and-assemble:
@@ -12,10 +11,10 @@ jobs:
 
     steps:
     - name: 1. Ambil Kode dari Repositori
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4 # <-- MUTAKHIRKAN KE V4!
 
     - name: 2. Siapkan Java JDK 17
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4 # <-- MUTAKHIRKAN KE V4!
       with:
         distribution: 'zulu'
         java-version: '17'
@@ -46,7 +45,7 @@ jobs:
         ./gradlew assembleDebug --rerun-tasks
 
     - name: 7. Amankan File APK ke GitHub Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4 # <-- INTEGRASI LEGAL KE V4!
       with:
         name: GODICO-DevHub-APK
         path: app/build/outputs/apk/debug/app-debug.apk
