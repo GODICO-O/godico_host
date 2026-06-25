@@ -13,7 +13,7 @@ pub extern "C" fn Java_com_godico_devhub_MainActivity_startIpcServer(
                     let mut buffer = [0; 1024];
                     if let Ok(bytes) = s.read(&mut buffer) {
                         let pesan = String::from_utf8_lossy(&buffer[..bytes]);
-                        if pesan.starts_with("PIXEL_DATA:") {
+                        if pesan.starts_with("PIXEL_DAT:") {
                             // Data gambar akan masuk ke sini
                             let _ = s.write_all(b"ACK:PIXELS_RECEIVED");
                         } else {
