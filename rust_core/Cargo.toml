@@ -8,8 +8,8 @@ crate-type = ["cdylib"]
 
 [dependencies]
 libc = "0.2"
-ndk-sys = "0.5.0"
-jni-sys = "0.3.0" # SUDAH DIREVISI PAKAI TANDA STRIP (LULUS SENSOR)
+# Gunakan fitur = ["game-activity"] secara eksplisit
+android-activity = { version = "0.5.2", features = ["game-activity"] }
 log = "0.4"
 android_logger = "0.13"
 
