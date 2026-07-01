@@ -14,8 +14,13 @@ fn android_main(app: AndroidApp) {
     app.poll_events(Some(std::time::Duration::from_millis(16)), |event| {
         if let PollEvent::Main(event) = event {
             match event {
-                MainEvent::InitWindow => {
-                    info!("GODICO: InitWindow event received.");
+                // Mengikuti saran compiler: tambahkan {}
+                MainEvent::InitWindow {} => {
+                    info!("GODICO: InitWindow event captured!");
+                    // Di sini kita bisa coba akses window-nya
+                    if let Some(window) = app.native_window() {
+                         info!("GODICO: Window Width: {}", window.width());
+                    }
                 }
                 _ => (),
             }
