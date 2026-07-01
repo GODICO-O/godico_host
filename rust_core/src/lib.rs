@@ -12,21 +12,13 @@ fn android_main(app: AndroidApp) {
     info!("GODICO NATIVE: Engine Running...");
 
     app.poll_events(Some(std::time::Duration::from_millis(16)), |event| {
-        match event {
-            PollEvent::Main(event) => match event {
+        if let PollEvent::Main(event) = event {
+            match event {
                 MainEvent::InitWindow => {
-                    // Di versi ini, window diakses melalui app.native_window()
-                    if let Some(window) = app.native_window() {
-                        info!("GODICO: NativeWindow Acquired! Width: {}, Height: {}", 
-                              window.width(), window.height());
-                    }
-                },
-                MainEvent::TermWindow => {
-                    info!("GODICO: NativeWindow Released.");
-                },
+                    info!("GODICO: InitWindow event received.");
+                }
                 _ => (),
-            },
-            _ => (),
+            }
         }
     });
 }
