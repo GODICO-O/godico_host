@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.godico.devhub">
-    <application android:allowBackup="true" android:label="GODICO DevHub" android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+    <application 
+        android:allowBackup="true" 
+        android:label="GODICO DevHub" 
+        android:icon="@mipmap/ic_launcher"
+        android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+        
         <activity
             android:name="com.google.androidgamesdk.GameActivity"
             android:exported="true"
