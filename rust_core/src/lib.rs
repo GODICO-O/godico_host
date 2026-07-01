@@ -6,16 +6,30 @@ pub extern "C" fn JNI_OnLoad(
     65542
 }
 
-// Fungsi ini yang dicari oleh MainActivity.java
 #[no_mangle]
 pub extern "C" fn Java_com_godico_devhub_MainActivity_startIpcServer(
     _env: *mut std::ffi::c_void, 
     _class: *mut std::ffi::c_void
 ) {
-    // Logic IPC Server lu di sini
+    // Logic IPC Server
 }
 
 #[no_mangle]
 pub extern "C" fn android_main(app: *mut std::ffi::c_void) {
-    // Logic untuk NativeActivity
+    android_logger::init_once(
+        android_logger::Config::default()
+            .with_max_level(log::LevelFilter::Debug)
+            .with_tag("GODICO_NATIVE"),
+    );
+
+    log::debug!("Engine Native menyala, menunggu event sistem...");
+
+    // Catatan: Ini adalah konsep loop untuk Native Activity.
+    // Jika lu menggunakan crate 'android-activity' (rekomendasi), 
+    // sistem event ini sudah dihandle otomatis oleh macro.
+    
+    // Logika dasar untuk menangani orientasi layar:
+    // 1. Dapatkan native window.
+    // 2. Pantau APP_CMD_CONFIG_CHANGED melalui event loop.
+    // 3. Update ukuran buffer render saat event diterima.
 }
