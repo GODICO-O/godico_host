@@ -10,13 +10,17 @@ echo -e "${BIRU}====================================================${NORMAL}"
 # 1. OTOMATIS GAMPUR PUSH KE GITHUB
 echo -e "\n${KUNING}[1/4] Mengunci kode dan mengirim ke awan GitHub...${NORMAL}"
 git add .
-git commit -m "Auto-build: Sinkronisasi kode untuk CI/CD"
+git commit -m "Auto-deploy: Sinkronisasi kode dan trigger CI/CD"
 git push origin main
 
 if [ $? -ne 0 ]; then
     echo -e "${MERAH}❌ Gagal melakukan push! Periksa koneksi atau repositori lu.${NORMAL}"
     exit 1
 fi
+
+# JEDA SESUAI INSTRUKSI STRATEGIS KOMANDAN
+echo -e "\n${KUNING}⏳ Memberikan jeda 5 detik agar server GitHub bangun...${NORMAL}"
+sleep 5
 
 # 2. OTOMATIS MEMANTAU BUILD (GH RUN WATCH)
 echo -e "\n${KUNING}[2/4] Menghubungi robot GitHub Actions. Memulai pengawasan...${NORMAL}"
