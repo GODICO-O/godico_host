@@ -1,28 +1,15 @@
-use android_activity::{AndroidApp, MainEvent, PollEvent};
-use log::info;
-
 #[no_mangle]
-fn android_main(app: AndroidApp) {
-    android_logger::init_once(
-        android_logger::Config::default()
-            .with_max_level(log::LevelFilter::Info)
-            .with_tag("GODICO_NATIVE")
-    );
+pub extern "C" fn JNI_OnLoad(
+    _vm: *mut std::ffi::c_void, 
+    _reserved: *mut std::ffi::c_void
+) -> i32 {
+    // Memberitahu Android bahwa kita menggunakan JNI versi 1.6
+    65536 // 0x00010006
+}
 
-    info!("GODICO NATIVE: Engine Running...");
-
-    app.poll_events(Some(std::time::Duration::from_millis(16)), |event| {
-        if let PollEvent::Main(event) = event {
-            match event {
-                // Gunakan .. untuk mengabaikan field internal yang non-exhaustive
-                MainEvent::InitWindow { .. } => {
-                    info!("GODICO: InitWindow event captured!");
-                    if let Some(window) = app.native_window() {
-                         info!("GODICO: Window Width: {}", window.width());
-                    }
-                }
-                _ => (),
-            }
-        }
-    });
+// PENTING: Untuk GameActivity, kita butuh main entry point
+// agar sistem Android tahu fungsi mana yang harus dijalankan
+#[no_mangle]
+pub extern "C" fn android_main(app: *mut std::ffi::c_void) {
+    // Di sini nantinya kita panggil logic engine lu
 }

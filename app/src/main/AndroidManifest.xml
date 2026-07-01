@@ -1,14 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.godico.devhub">
-    <application 
-        android:allowBackup="true" 
-        android:label="GODICO DevHub" 
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" 
+    package="com.godico.devhub">
+
+    <application
+        android:allowBackup="true"
+        android:label="GODICO DevHub"
         android:icon="@mipmap/ic_launcher"
-        android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
-        
+        android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+        android:hasCode="true">
+
+        <meta-data 
+            android:name="android.app.lib_name" 
+            android:value="rust_core" />
+
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|keyboardHidden|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
