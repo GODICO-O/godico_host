@@ -7,13 +7,8 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-libc = "0.2"
-# Gunakan fitur = ["game-activity"] secara eksplisit
 android-activity = { version = "0.5.2", features = ["game-activity"] }
 log = "0.4"
 android_logger = "0.13"
-
-[profile.release]
-lto = true
-codegen-units = 1
-panic = "abort"
+pixels = "0.13"
+winit = "0.29"
