@@ -3,17 +3,20 @@ use android_activity::{AndroidApp, MainEvent, PollEvent};
 #[no_mangle]
 fn android_main(app: AndroidApp) {
     android_logger::init_once(android_logger::Config::default().with_tag("GODICO_NATIVE"));
-    
-    // Versi 0.5.2 mewajibkan closure (callback) di dalam poll_events
-    app.poll_events(Some(std::time::Duration::from_millis(16)), |event| {
+    log::info!("GODICO NATIVE: Engine Starting...");
+
+    // Event Loop yang efisien dan smooth
+    app.poll_events(Some(std::time::Duration::from_millis(10)), |event| {
         match event {
             PollEvent::Main(event) => match event {
-                // Gunakan { .. } untuk mengabaikan data internal yang tidak kita pakai
+                MainEvent::InitWindow => {
+                    log::info!("GODICO NATIVE: Window Ready - Render Start");
+                }
                 MainEvent::Resume { .. } => {
-                    log::info!("GODICO NATIVE: Engine Aktif!");
+                    log::info!("GODICO NATIVE: App Resumed - Smooth Flow");
                 }
                 MainEvent::Destroy => {
-                    log::info!("GODICO NATIVE: Engine Dimatikan");
+                    log::info!("GODICO NATIVE: Shutdown");
                 }
                 _ => (),
             },
