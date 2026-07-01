@@ -7,10 +7,8 @@
         android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
         
         <activity
-            android:name="com.google.androidgamesdk.GameActivity"
-            android:exported="true"
-            android:configChanges="orientation|screenSize|uiMode|density">
-            <meta-data android:name="android.app.lib_name" android:value="rust_core" />
+            android:name=".MainActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
