@@ -17,7 +17,15 @@ jobs:
       with:
         targets: aarch64-linux-android
 
+    - name: 2.1 Siapkan NDK (Otomatis)
+      uses: nrdk/setup-ndk@v1
+      with:
+        ndk-version: r26b
+
     - name: 3. Kompilasi Biner Rust (Native)
+      env:
+        CC: aarch64-linux-android-clang
+        CXX: aarch64-linux-android-clang++
       run: |
         cd rust_core
         cargo build --target aarch64-linux-android --release
