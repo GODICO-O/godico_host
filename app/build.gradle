@@ -19,6 +19,11 @@ android {
             jniLibs.srcDirs = ['src/main/jniLibs']
         }
     }
+    
+    // Nambahin ini buat fix konflik metadata
+    packagingOptions {
+        pickFirst 'META-INF/androidx.*'
+    }
 }
 
 dependencies {
