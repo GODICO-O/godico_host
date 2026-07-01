@@ -7,10 +7,8 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
-    static {
-        System.loadLibrary("rust_core");
-    }
-
+    
+    // Kita hapus static loadLibrary biar gak berat di awal!
     public native boolean checkRootStatus();
 
     @Override
@@ -23,7 +21,15 @@ public class MainActivity extends AppCompatActivity {
 
         verify_root.setOnClickListener(v -> {
             new Thread(() -> {
+                // Load library hanya saat tombol ditekan (Lazy Loading)
+                try {
+                    System.loadLibrary("rust_core");
+                } catch (UnsatisfiedLinkError e) {
+                    // Berarti library sudah pernah dimuat sebelumnya
+                }
+
                 boolean rooted = checkRootStatus();
+                
                 runOnUiThread(() -> {
                     root_status.setText(rooted ? "Your Phone Is Rooted" : "Phone Is Not Rooted");
                     root_status.setTextColor(Color.parseColor(rooted ? "#00FF00" : "#FF0000"));

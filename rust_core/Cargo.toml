@@ -14,3 +14,10 @@ pixels = "0.13"
 winit = "0.29"
 ndk-sys = "0.5" # Untuk memastikan binding sistem stabil
 jni = "0.21"
+
+[profile.release]
+opt-level = 'z'       # Optimasi ukuran (Size)
+lto = true            # Link Time Optimization (Hapus kode mati)
+codegen-units = 1     # Kompilasi lebih rapat
+panic = 'abort'       # Buang fitur stack unwinding yang berat
+strip = true          # BUANG SYMBOL DEBUG (Ini yang paling pengaruh ke ukuran!)
