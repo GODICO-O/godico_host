@@ -9,12 +9,13 @@
         android:id="@+id/root_status"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Status Root Belum Dicek"
+        android:text="Tekan Tombol Untuk Cek!"
         android:textSize="20sp" />
 
     <Button
         android:id="@+id/verify_root"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Verify Root" />
+        android:text="Verify Root"
+        android:layout_marginTop="16dp" />
 </LinearLayout>
