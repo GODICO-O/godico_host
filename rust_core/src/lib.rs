@@ -1,5 +1,10 @@
+use jni::objects::JClass;
+use jni::sys::jboolean;
+use jni::JNIEnv;
+use std::process::Command;
+
 #[no_mangle]
-pub extern "C" fn JNI_OnLoad(
+pub extern "system" fn JNI_OnLoad(
     _vm: *mut std::ffi::c_void,
     _reserved: *mut std::ffi::c_void
 ) -> i32 {
@@ -7,29 +12,25 @@ pub extern "C" fn JNI_OnLoad(
 }
 
 #[no_mangle]
-pub extern "C" fn Java_com_godico_devhub_MainActivity_startIpcServer(
-    _env: *mut std::ffi::c_void, 
-    _class: *mut std::ffi::c_void
+pub extern "system" fn Java_com_godico_devhub_MainActivity_startIpcServer(
+    _env: JNIEnv, 
+    _class: JClass
 ) {
-    // Logic IPC Server
+    // Logic IPC Server di sini
 }
 
 #[no_mangle]
-pub extern "C" fn android_main(app: *mut std::ffi::c_void) {
-    android_logger::init_once(
-        android_logger::Config::default()
-            .with_max_level(log::LevelFilter::Debug)
-            .with_tag("GODICO_NATIVE"),
-    );
+pub extern "system" fn Java_com_godico_devhub_MainActivity_checkRootStatus(
+    _env: JNIEnv, 
+    _class: JClass
+) -> jboolean {
+    let output = Command::new("su")
+        .arg("-c")
+        .arg("id")
+        .output();
 
-    log::debug!("Engine Native menyala, menunggu event sistem...");
-
-    // Catatan: Ini adalah konsep loop untuk Native Activity.
-    // Jika lu menggunakan crate 'android-activity' (rekomendasi), 
-    // sistem event ini sudah dihandle otomatis oleh macro.
-    
-    // Logika dasar untuk menangani orientasi layar:
-    // 1. Dapatkan native window.
-    // 2. Pantau APP_CMD_CONFIG_CHANGED melalui event loop.
-    // 3. Update ukuran buffer render saat event diterima.
+    match output {
+        Ok(out) => if out.status.success() { 1 } else { 0 },
+        Err(_) => 0,
+    }
 }
