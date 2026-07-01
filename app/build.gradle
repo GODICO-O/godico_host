@@ -14,16 +14,14 @@ android {
         versionName "1.0"
     }
 
-    // MANDATORI MUTLAK: Beritahu Gradle untuk mengemas .so dari jniLibs
     sourceSets {
         main {
             jniLibs.srcDirs = ['src/main/jniLibs']
         }
     }
+}
 
-    buildTypes {
-        release {
-            minifyEnabled false
-        }
-    }
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.9.0'
 }
