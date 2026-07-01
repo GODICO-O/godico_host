@@ -7,7 +7,6 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
-
     static {
         System.loadLibrary("rust_core");
     }
@@ -23,18 +22,11 @@ public class MainActivity extends AppCompatActivity {
         TextView root_status = findViewById(R.id.root_status);
 
         verify_root.setOnClickListener(v -> {
-            // Panggil di background thread biar UI gak freeze
             new Thread(() -> {
                 boolean rooted = checkRootStatus();
-                
                 runOnUiThread(() -> {
-                    if (rooted) {
-                        root_status.setText("Your Phone Is Rooted");
-                        root_status.setTextColor(Color.parseColor("#00FF00"));
-                    } else {
-                        root_status.setText("Phone Is Not Rooted");
-                        root_status.setTextColor(Color.parseColor("#FF0000"));
-                    }
+                    root_status.setText(rooted ? "Your Phone Is Rooted" : "Phone Is Not Rooted");
+                    root_status.setTextColor(Color.parseColor(rooted ? "#00FF00" : "#FF0000"));
                 });
             }).start();
         });
