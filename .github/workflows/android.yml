@@ -21,10 +21,13 @@ jobs:
       run: |
         echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "ndk;26.1.10909125"
         echo "NDK_HOME=$ANDROID_HOME/ndk/26.1.10909125" >> $GITHUB_ENV
+        # Ekspor path agar clang mudah ditemukan
         echo "$ANDROID_HOME/ndk/26.1.10909125/toolchains/llvm/prebuilt/linux-x86_64/bin" >> $GITHUB_PATH
 
     - name: 3. Kompilasi Biner Rust (Native)
       env:
+        # Paksa linker menggunakan path absolut ke clang
+        CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER: aarch64-linux-android33-clang
         CC: aarch64-linux-android33-clang
         CXX: aarch64-linux-android33-clang++
       run: |
